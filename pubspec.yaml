@@ -1,16 +1,17 @@
 name: flutter_ifood_pago
 description: "A new Flutter plugin project."
 version: 0.0.1
-homepage:
+homepage: https://github.com/Luiz-Carlos-de-Lima/flutter_ifood_pago
 
 environment:
   sdk: ^3.8.1
-  flutter: '>=3.3.0'
+  flutter: ">=3.3.0"
 
 dependencies:
   flutter:
     sdk: flutter
   plugin_platform_interface: ^2.0.2
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
@@ -35,7 +36,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.flutter_ifood_pago.flutter_ifood_pago
+        package: com.flutter_ifood_pago
         pluginClass: FlutterIfoodPagoPlugin
 
   # To add assets to your plugin package, add an assets section, like this:
