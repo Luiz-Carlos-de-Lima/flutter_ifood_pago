@@ -38,6 +38,8 @@ class PaymentDeeplink: Deeplink() {
                 put("transactionId", transactionId)
                 put("tableId", tableId)
                 put("printReceipt", printReceipt)
+                put("urlToReturn", "payment_response")
+                put("sendResultInSameIntent", true)
             }
 
             val contentBase64 = Base64.encodeToString(

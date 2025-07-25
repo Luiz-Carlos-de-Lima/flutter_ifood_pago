@@ -3,12 +3,13 @@ package com.flutter_ifood_pago
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import com.flutter_ifood_pago.deeplink.Deeplink
 import com.flutter_ifood_pago.deeplink.PaymentDeeplink
 import com.flutter_ifood_pago.deeplink.RequestPrintTokenDeeplink
 import com.flutter_ifood_pago.deeplink.RefundDeeplink
 import com.flutter_ifood_pago.services.DeviceInfo
-import com.flutter_ifood_pago.services.Print
+import com.flutter_ifood_pago.services.GenerateImageBase64
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -16,9 +17,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+
 
 class FlutterIfoodPagoPlugin: FlutterPlugin, MethodCallHandler , ActivityAware {
   private lateinit var channel: MethodChannel
@@ -26,7 +25,7 @@ class FlutterIfoodPagoPlugin: FlutterPlugin, MethodCallHandler , ActivityAware {
   private val paymentDeeplink = PaymentDeeplink()
   private val refundDeeplink = RefundDeeplink()
   private val requestPrintToken = RequestPrintTokenDeeplink()
-  private val print = Print()
+  private val generateImageBase64 = GenerateImageBase64()
 
   private var binding: ActivityPluginBinding? = null
   private var resultScope: Result? = null
@@ -107,19 +106,14 @@ class FlutterIfoodPagoPlugin: FlutterPlugin, MethodCallHandler , ActivityAware {
         }
         starDeeplink(requestPrintToken, bundle)
       }
-      "print" -> {
-        val token: String = call.argument<String>("token") ?: ""
+      "generateImageBase64" -> {
         val listPrintContent: List<HashMap<String, Any?>>? = call.argument<List<HashMap<String, Any?>>>("printable_content")
-        if (listPrintContent.isNullOrEmpty() ) {
-          result.error("PRINT_ERROR", "print error, printable_content is null", null)
-        }
-        CoroutineScope(Dispatchers.Main).launch {
-          try {
-            val resultPrint = print.requestPrint(binding!!.activity, token, listPrintContent!!.toBundleList())
-            result.success(resultPrint)
-          } catch (e: Exception) {
-            result.error("PRINT_ERROR", e.message, null)
-          }
+        if (listPrintContent != null) {
+          val responseMap: Map<String, Any?> = generateImageBase64.convertPrintableItemsToImageBase64(binding!!.activity, listPrintContent.toBundleList())
+
+          sendResultData(responseMap)
+        } else {
+          resultScope?.error("ERROR", "GenerateImageBase64", null)
         }
       }
       "getSerialNumberAndDeviceModel" -> {

@@ -36,7 +36,7 @@ abstract class FlutterIfoodPagoPlatform extends PlatformInterface {
     throw UnimplementedError('refund() has not been implemented.');
   }
 
-  Future<void> print({required IfoodPagoPrintPayload payload}) {
-    throw UnimplementedError('print() has not been implemented.');
+  Future<List<Map>> printData({required IfoodPagoPrintPayload payload}) {
+    return throw UnimplementedError('print() has not been implemented.');
   }
 }

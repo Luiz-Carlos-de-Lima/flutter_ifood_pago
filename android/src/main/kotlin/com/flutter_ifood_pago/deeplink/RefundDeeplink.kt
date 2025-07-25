@@ -24,6 +24,8 @@ class RefundDeeplink: Deeplink() {
             val contentJson = JSONObject().apply {
                 put("transactionIdAdyen", transactionIdAdyen)
                 put("printReceipt", printReceipt)
+                put("urlToReturn", "refund_response")
+                put("sendResultInSameIntent", true)
             }
 
             val contentBase64 = Base64.encodeToString(

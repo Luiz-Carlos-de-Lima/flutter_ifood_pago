@@ -2,7 +2,11 @@ package com.flutter_ifood_pago.deeplink
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import kotlin.reflect.typeOf
 
 abstract class Deeplink {
     open fun startDeeplink(binding: ActivityPluginBinding, bundle: Bundle) : Bundle {
@@ -17,35 +21,34 @@ abstract class Deeplink {
                     "message" to "no intent data"
                 )
             }
-            val extras: Bundle? = intent.extras
-            val status: String? = extras?.getString("status")
 
-            when (status) {
-                "SUCCESS" -> {
-                    val data: MutableMap<String, Any?> = mutableMapOf()
+            val extras: Bundle = intent.extras
+                ?: return mapOf(
+                    "code" to "ERROR",
+                    "message" to "no extras in intent"
+                )
 
-                    for (key: String in extras.keySet()) {
-                        data[key] = extras.get(key)
-                    }
+            val resultString: String = extras.get("RESULT")?.toString() ?: return mapOf(
+                "code" to "ERROR",
+                "message" to "no result in intent"
+            )
 
-                    return mapOf(
-                        "code" to "SUCCESS",
-                        "data" to data
-                    )
-                }
-                else -> {
-                    var message: String =  "Erro não identificado"
-                    val resultDetail: String? = extras?.getString("errorReason")
+            val gson = Gson()
+            val type = object : TypeToken<Map<String, Any>>() {}.type
+            val resultMap: Map<String, Any> = gson.fromJson(resultString, type)
 
-                    if(resultDetail != null) {
-                        message = "$resultDetail"
-                    }
+            if (resultMap["status"] == "SUCCESS") {
+                return mapOf(
+                    "code" to "SUCCESS",
+                    "data" to resultMap
+                )
+            } else  {
+               val message = resultMap["errorReason"]?.toString() ?: "Erro não identificado"
 
-                    return mapOf(
-                        "code" to "ERROR",
-                        "message" to message
-                    )
-                }
+                return mapOf(
+                    "code" to "ERROR",
+                    "message" to message
+                )
             }
         } catch (e: Exception) {
             return mapOf(

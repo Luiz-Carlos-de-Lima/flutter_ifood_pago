@@ -23,6 +23,8 @@ class RequestPrintTokenDeeplink: Deeplink() {
 
             val contentJson = JSONObject().apply {
                 put("integrationApp", integrationApp)
+                put("urlToReturn", "request_print_token_response")
+                put("sendResultInSameIntent", true)
             }
 
             val contentBase64 = Base64.encodeToString(
@@ -35,6 +37,7 @@ class RequestPrintTokenDeeplink: Deeplink() {
                 authority("portal.ifood.com.br")
                 appendPath("print-file")
                 appendQueryParameter("content", contentBase64)
+
             }
 
             val printIntent = Intent(Intent.ACTION_VIEW)

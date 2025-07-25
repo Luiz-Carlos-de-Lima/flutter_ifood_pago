@@ -15,7 +15,7 @@ class FlutterIfoodPago {
     return FlutterIfoodPagoPlatform.instance.refund(payload: payload);
   }
 
-  Future<void> print({required IfoodPagoPrintPayload payload}) {
-    return FlutterIfoodPagoPlatform.instance.print(payload: payload);
+  Future<List<Map>> printData({required IfoodPagoPrintPayload payload}) {
+    return FlutterIfoodPagoPlatform.instance.printData(payload: payload);
   }
 }

@@ -17,7 +17,7 @@ class IfoodPagoContentprint {
       assert(type != IfoodPagoPrintType.line || content is String, "content cannot be null when type is line");
 
   /// Método para formatar o conteúdo evitando cortes no meio das palavras e tratando palavras maiores que o limite da linha.
-  String _formatContent() {
+  String formatContent() {
     if (ignoreLineBreak == true) {
       return content ?? '';
     }
@@ -73,7 +73,7 @@ class IfoodPagoContentprint {
 
     return {
       'type': type.name.toString(),
-      'content': type != IfoodPagoPrintType.image ? _formatContent() : null,
+      'content': type != IfoodPagoPrintType.image ? formatContent() : null,
       'align': disableAlignAndSize ? null : align?.name.toString(),
       'size': disableAlignAndSize ? null : size?.name.toString(),
       'imagePath': type == IfoodPagoPrintType.image ? imagePath : null,

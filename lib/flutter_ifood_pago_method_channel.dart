@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_ifood_pago/constants/ifood_pago_keys_storage.dart';
@@ -11,10 +13,9 @@ import 'package:flutter_ifood_pago/models/ifood_pago_payment_payload.dart';
 import 'package:flutter_ifood_pago/models/ifood_pago_print_payload.dart';
 import 'package:flutter_ifood_pago/models/ifood_pago_refund_payload.dart';
 import 'package:flutter_ifood_pago/models/ifood_pago_refund_response.dart';
+import 'package:flutter_ifood_pago/services/ifood_pago_printer_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'dart:convert';
-import 'dart:io';
+import 'package:http/http.dart' as http;
 
 import 'flutter_ifood_pago_platform_interface.dart';
 
@@ -30,8 +31,7 @@ class MethodChannelFlutterIfoodPago extends FlutterIfoodPagoPlatform {
       final response = await methodChannel.invokeMethod<Map>('pay', payload.toJson());
       if (response is Map) {
         if (response['code'] == IfoodPagoStatusDeeplink.SUCCESS.name && response['data'] is Map) {
-          final jsonData = response['data'];
-          return IfoodPagoPaymentResponse.fromJson(jsonData);
+          return IfoodPagoPaymentResponse.fromJson(Map<String, dynamic>.from(response['data']));
         } else {
           throw IfoodPagoPaymentException(message: response['message']);
         }
@@ -53,8 +53,7 @@ class MethodChannelFlutterIfoodPago extends FlutterIfoodPagoPlatform {
       final response = await methodChannel.invokeMethod<Map>('refund', payload.toJson());
       if (response is Map) {
         if (response['code'] == IfoodPagoStatusDeeplink.SUCCESS.name && response['data'] is Map) {
-          final jsonData = response['data'];
-          return IfoodPagoRefundResponse.fromJson(jsonData);
+          return IfoodPagoRefundResponse.fromJson(Map<String, dynamic>.from(response['data']));
         } else {
           throw IfoodPagoRefundException(message: response['message']);
         }
@@ -71,17 +70,21 @@ class MethodChannelFlutterIfoodPago extends FlutterIfoodPagoPlatform {
   }
 
   @override
-  Future<void> print({required IfoodPagoPrintPayload payload}) async {
+  Future<List<Map>> printData({required IfoodPagoPrintPayload payload}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       String accessToken = prefs.getString(IfoodPagoKeysStorage.TOKEN) ?? '';
       String createAt = prefs.getString(IfoodPagoKeysStorage.TOKEN_CREATED_AT) ?? '';
 
-      DateTime createAtDate = DateTime.parse(createAt);
+      DateTime? createAtDate = DateTime.tryParse(createAt);
       DateTime now = DateTime.now();
-      Duration difference = now.difference(createAtDate);
+      Duration? difference;
 
-      if (difference.inHours > 24) {
+      if (createAtDate != null) {
+        difference = now.difference(createAtDate);
+      }
+
+      if (difference != null && difference.inHours > 24) {
         await prefs.remove(IfoodPagoKeysStorage.TOKEN);
         await prefs.remove(IfoodPagoKeysStorage.TOKEN_CREATED_AT);
 
@@ -90,7 +93,7 @@ class MethodChannelFlutterIfoodPago extends FlutterIfoodPagoPlatform {
       }
 
       if (accessToken.isEmpty && createAt.isEmpty) {
-        final response = await methodChannel.invokeMethod<Map>('print', {'integrationApp': payload.integrationApp});
+        final response = await methodChannel.invokeMethod<Map>('requestPrintToken', {'integrationApp': payload.integrationApp});
 
         if (response is! Map) {
           throw IfoodPagoPrintException(message: 'invalid response');
@@ -104,8 +107,7 @@ class MethodChannelFlutterIfoodPago extends FlutterIfoodPagoPlatform {
           throw IfoodPagoPrintException(message: 'invalid response data');
         }
 
-        final jsonData = response['data'];
-        final authResponse = IfoodPagoAuthResponse.fromJson(jsonData);
+        final authResponse = IfoodPagoAuthResponse.fromJson(Map<String, dynamic>.from(response['data']));
 
         accessToken = authResponse.hash;
         createAt = authResponse.createAt;
@@ -114,37 +116,37 @@ class MethodChannelFlutterIfoodPago extends FlutterIfoodPagoPlatform {
         prefs.setString(IfoodPagoKeysStorage.TOKEN_CREATED_AT, createAt);
       }
 
-      final url = Uri.parse('https://movilepay-api.ifood.com.br/ifoodpay/mobile/api/v1/print/file');
-      final httpClient = HttpClient();
-      final request = await httpClient.postUrl(url);
+      final listaImageBase64 = await methodChannel.invokeMethod<Map>('generateImageBase64', {'printable_content': payload.toJson()['printable_content']});
 
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
-
-      final body = jsonEncode({"authorizationHash": accessToken, "contentBase64": ''});
-
-      request.add(utf8.encode(body));
-
-      final response = await request.close();
-
-      if (response.statusCode == 200) {
-        final responseBody = await response.transform(utf8.decoder).join();
-        final responseJson = jsonDecode(responseBody);
-        if (responseJson is! Map) {
-          throw IfoodPagoPrintException(message: 'invalid response format');
-        }
-
-        if (responseJson['code'] != IfoodPagoStatusDeeplink.SUCCESS.name) {
-          throw IfoodPagoPrintException(message: responseJson['message']);
-        }
-
-        if (responseJson['data'] is! Map) {
-          throw IfoodPagoPrintException(message: 'invalid response data');
-        }
-
-        final data = responseJson['data'];
-      } else {
-        throw IfoodPagoPrintException(message: 'invalid response');
+      if (listaImageBase64 is! Map) {
+        throw IfoodPagoPrintException(message: 'invalid listaImageBase64');
       }
+
+      if (listaImageBase64['code'] != IfoodPagoStatusDeeplink.SUCCESS.name) {
+        throw IfoodPagoPrintException(message: listaImageBase64['message']);
+      }
+
+      if (listaImageBase64['data'] is! List) {
+        throw IfoodPagoPrintException(message: 'invalid response data');
+      }
+
+      List<Map> imageBase64List = [];
+
+      for (var imageBase64 in listaImageBase64['data']) {
+        final response = await http.post(
+          Uri.parse("https://movilepay-api.ifood.com.br/ifoodpay/mobile/api/v1/print/file"),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({"authorizationHash": accessToken, "contentBase64": imageBase64['imageBase64']}),
+        );
+
+        if (response.statusCode == 200) {
+          imageBase64List.add({'imageBase64': imageBase64['imageBase64']});
+        } else {
+          imageBase64List.add({'messageError': 'Failed to print: ${response.reasonPhrase}', 'imageBase64': imageBase64['imageBase64']});
+        }
+      }
+
+      return imageBase64List;
     } on IfoodPagoPrintException catch (e) {
       throw IfoodPagoPrintException(message: e.message);
     } on PlatformException catch (e) {

@@ -37,7 +37,7 @@ class IfoodPagoPaymentResponse {
       transactionDate: json['transactionDate'] ?? '',
       transactionTime: json['transactionTime'] ?? '',
       authCode: json['authCode'] ?? '',
-      subsidyInformation: List<Map<String, dynamic>>.from(json['subsidyInformation'] ?? []),
+      subsidyInformation: (json['subsidyInformation'] as List).map((item) => Map<String, dynamic>.from(item as Map)).toList(),
     );
   }
 
