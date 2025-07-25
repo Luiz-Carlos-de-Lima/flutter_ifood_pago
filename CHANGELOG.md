@@ -1,3 +1,4 @@
-## 0.0.1
+## 1.0.0
+* First release of the plugin.
 
-* TODO: Describe initial release.
+* Implementação inicial com funcionalidades de pagamento, estorno e impressão.
