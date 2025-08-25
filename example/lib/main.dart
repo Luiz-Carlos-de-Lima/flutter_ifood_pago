@@ -594,9 +594,176 @@ class _PrintPageState extends State<_PrintPage> {
                         ? null
                         : () async {
                             try {
+                              List teste = [
+                                IfoodPagoContentprint(
+                                  type: IfoodPagoPrintType.text,
+                                  align: IfoodPagoPrintAlign.left,
+                                  size: IfoodPagoPrintSize.small,
+                                  ignoreLineBreak: true,
+                                  content: '''                 JCLAN SISTEMAS                 
+------------------------------------------------
+          BAR           
+================================================
+Comanda: 87             
+------------------------------------------------
+Nome: Luiz C                                    
+------------------------------------------------
+Entregar na Mesa: 12                            
+------------------------------------------------
+IMP: 01/3 (BR)                                  
+At: 0 - Suporte                                 
+Term: 1                       Dt: 25/08/25 12:11
+================================================
+Qtde - Produto                                  
+------------------------------------------------
+1 - HEINEKKEN                                   
+------------------------------------------------
+                  Data Impressao: 25/08/25 12:11
+''',
+                                ),
+                                IfoodPagoContentprint(
+                                  type: IfoodPagoPrintType.text,
+                                  align: IfoodPagoPrintAlign.left,
+                                  size: IfoodPagoPrintSize.small,
+                                  ignoreLineBreak: true,
+                                  content: '''                                                ''',
+                                ),
+                                IfoodPagoContentprint(
+                                  type: IfoodPagoPrintType.text,
+                                  align: IfoodPagoPrintAlign.left,
+                                  size: IfoodPagoPrintSize.small,
+                                  ignoreLineBreak: true,
+                                  content: '''                 JCLAN SISTEMAS                 
+------------------------------------------------
+          BAR           
+================================================
+Comanda: 87             
+------------------------------------------------
+Nome: Luiz C                                    
+------------------------------------------------
+Entregar na Mesa: 12                            
+------------------------------------------------
+IMP: 11/3 (BR)                                  
+At: 0 - Suporte                                 
+Term: 1                       Dt: 25/08/25 12:11
+================================================
+Qtde - Produto                                  
+------------------------------------------------
+1 - MANIACS CRAFT                               
+------------------------------------------------
+                  Data Impressao: 25/08/25 12:11
+''',
+                                ),
+                                IfoodPagoContentprint(
+                                  type: IfoodPagoPrintType.text,
+                                  align: IfoodPagoPrintAlign.left,
+                                  size: IfoodPagoPrintSize.small,
+                                  ignoreLineBreak: true,
+                                  content: '''                                                ''',
+                                ),
+                                IfoodPagoContentprint(
+                                  type: IfoodPagoPrintType.text,
+                                  align: IfoodPagoPrintAlign.left,
+                                  size: IfoodPagoPrintSize.small,
+                                  ignoreLineBreak: true,
+                                  content: '''                 JCLAN SISTEMAS                 
+------------------------------------------------
+          BAR           
+================================================
+Comanda: 87             
+------------------------------------------------
+Nome: Luiz C                                    
+------------------------------------------------
+Entregar na Mesa: 12                            
+------------------------------------------------
+IMP: 21/3 (BR)                                  
+At: 0 - Suporte                                 
+Term: 1                       Dt: 25/08/25 12:11
+================================================
+Qtde - Produto                                  
+------------------------------------------------
+1 - MANIACS WIT                                 
+------------------------------------------------
+                  Data Impressao: 25/08/25 12:11
+''',
+                                ),
+                                IfoodPagoContentprint(
+                                  type: IfoodPagoPrintType.text,
+                                  align: IfoodPagoPrintAlign.left,
+                                  size: IfoodPagoPrintSize.small,
+                                  ignoreLineBreak: true,
+                                  content: '''                                                ''',
+                                ),
+                                IfoodPagoContentprint(
+                                  type: IfoodPagoPrintType.text,
+                                  align: IfoodPagoPrintAlign.left,
+                                  size: IfoodPagoPrintSize.small,
+                                  ignoreLineBreak: true,
+                                  content: '''     JCLAN DESENVOLVIMENTO DE SOFTWARE LTDA     
+              CNPJ: 05333353000127              
+      AVENIDA BRASILIA, 4547, CURITIBA, PR      
+DOCUMENTO AUXILIAR DA NOTA FISCAL DE CONSUMIDOR 
+                   ELETRONICA                   
+------------------------------------------------
+CODIGO DESCRICAO      QTDE UN  VL UNIT  VL TOTAL
+538    - NOTA FISCAL EMITIDA EM AMBIENTE DE HOMO
+LOGACAO - SEM VALOR FISCAL
+                         1 UN     5,00      5,00
+538    - COCA COLA E     1 UN     5,00      5,00
+560    - HEINEKKEN       1 UN    10,00     10,00
+561    - MANIACS CRAFT
+                         1 UN    10,00     10,00
+563    - MANIACS WIT     1 UN    10,00     10,00
+999    - Gorjeta         1 UN     4,00      4,00
+------------------------------------------------
+Qtde. total de itens                           6
+Valor a Pagar R\$                           44,00                                                FORMA DE PAGAMENTO                 VALOR PAGO R\$
+Cartao de Debito                           44,00
+------------------------------------------------
+          CONSUMIDOR - CPF 08686654959          
+        Consulte pela Chave de Acesso em        
+   http://www.fazenda.pr.gov.br/nfce/consulta   
+  41250805333353000127652010000009741177075780  
+         NFC-e n. 000000974   Serie 201         
+       Data Emissao: 25/08/2025 12:11:50        
+                 EMISSAO NORMAL                                                                     Protocolo de autorizacao:141250000285772    
+    Data de Autorizacao: 25/08/2025 12:11:52    
+''',
+                                ),
+                                IfoodPagoContentprint(
+                                  type: IfoodPagoPrintType.text,
+                                  align: IfoodPagoPrintAlign.left,
+                                  ignoreLineBreak: true,
+                                  size: IfoodPagoPrintSize.small,
+                                  content: '''                                                ''',
+                                ),
+                                IfoodPagoContentprint(
+                                  type: IfoodPagoPrintType.image,
+                                  imagePath:
+                                      '''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''',
+                                ),
+                                IfoodPagoContentprint(
+                                  type: IfoodPagoPrintType.text,
+                                  align: IfoodPagoPrintAlign.left,
+                                  ignoreLineBreak: true,
+                                  size: IfoodPagoPrintSize.small,
+                                  content: '''                                                ''',
+                                ),
+                                IfoodPagoContentprint(
+                                  type: IfoodPagoPrintType.text,
+                                  align: IfoodPagoPrintAlign.left,
+                                  size: IfoodPagoPrintSize.small,
+                                  ignoreLineBreak: true,
+                                  content: '''
+Val. Aprox Tributos: Estadual 8,70 (19.77%), Nac
+ional 4,85 (11.02%), Fonte: IBPT                
+''',
+                                ),
+                              ];
+
                               final print = IfoodPagoPrintPayload(
                                 integrationApp: 'Exemplo_integradora',
-                                printableContent: List<IfoodPagoContentprint>.from(_receiptContent),
+                                printableContent: List<IfoodPagoContentprint>.from(teste),
                                 groupAll: true,
                               );
                               _previewBase64 = await flutterIfoodPagoPlugin.printData(payload: print);

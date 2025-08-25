@@ -11,23 +11,33 @@ class GenerateImageBase64 {
         return try {
             val listMap = convertPrintableContentInMapAndReturn(data)
 
-
             if (groupAll) {
                 val bitmaps = mutableListOf<Bitmap>()
 
                 listMap.forEach { item ->
                     if (item["type"] == "image") {
                         val originalBase64 = item["imagePath"] ?: ""
-                        val decodedBytes = Base64.decode(originalBase64, Base64.DEFAULT)
-                        val originalBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                        originalBitmap?.let { bitmaps.add(convertTo1BitBitmap(it)) }
+                        if (originalBase64.isNotBlank()) {
+                            val decodedBytes = Base64.decode(originalBase64, Base64.DEFAULT)
+                            val originalBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                            originalBitmap?.let { bitmaps.add(ensureWhiteBackground(it)) }
+                        }
                     } else {
                         val content = item["content"] ?: ""
-                        val align = item["align"] ?: "left"
-                        val size = item["size"] ?: "small"
-                        val textBitmap = createTextBitmap(context, content, align, size)
-                        bitmaps.add(convertTo1BitBitmap(textBitmap))
+                        if (content.isNotBlank()) { // só adiciona se tiver texto
+                            val align = item["align"] ?: "left"
+                            val size = item["size"] ?: "small"
+                            val textBitmap = createTextBitmap(context, content, align, size)
+                            bitmaps.add(convertTo1BitBitmap(textBitmap))
+                        }
                     }
+                }
+
+                if (bitmaps.isEmpty()) {
+                    // caso não haja nenhum bitmap válido, cria 1x1 branco
+                    bitmaps.add(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888).apply {
+                        eraseColor(Color.WHITE)
+                    })
                 }
 
                 val finalBitmap = mergeBitmapsVertically(bitmaps)
@@ -43,28 +53,26 @@ class GenerateImageBase64 {
                     )
                 )
             } else {
-                val mappedList = listMap.map { item ->
+                val mappedList = listMap.mapNotNull { item ->
                     if (item["type"] == "image") {
                         val originalBase64 = item["imagePath"] ?: ""
+                        if (originalBase64.isBlank()) return@mapNotNull null
                         val decodedBytes = Base64.decode(originalBase64, Base64.DEFAULT)
                         val originalBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-
-                        if (originalBitmap != null) {
-                            val bwBitmap = convertTo1BitBitmap(originalBitmap)
-                            val base64 = bitmapToBase64(bwBitmap)
+                        originalBitmap?.let {
+                            val bitmapWithWhite = ensureWhiteBackground(it)
+                            val base64 = bitmapToBase64(bitmapWithWhite)
                             mapOf("type" to "image", "imageBase64" to base64)
-                        } else {
-                            mapOf("type" to "image", "imageBase64" to "")
                         }
                     } else {
                         val content = item["content"] ?: ""
+                        if (content.isBlank()) return@mapNotNull null
                         val align = item["align"] ?: "left"
                         val size = item["size"] ?: "small"
 
                         val bitmap = createTextBitmap(context, content, align, size)
                         val bwBitmap = convertTo1BitBitmap(bitmap)
                         val base64 = bitmapToBase64(bwBitmap)
-
                         mapOf("type" to "image", "imageBase64" to base64)
                     }
                 }
@@ -84,11 +92,11 @@ class GenerateImageBase64 {
 
     private fun mergeBitmapsVertically(bitmaps: List<Bitmap>): Bitmap {
         if (bitmaps.isEmpty()) {
-            return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+            return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.WHITE) }
         }
 
-        val width = bitmaps.maxOf { it.width }
-        val totalHeight = bitmaps.sumOf { it.height }
+        val width = maxOf(1, bitmaps.maxOf { it.width })
+        val totalHeight = maxOf(1, bitmaps.sumOf { it.height })
 
         val result = Bitmap.createBitmap(width, totalHeight, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(result)
@@ -100,6 +108,18 @@ class GenerateImageBase64 {
             currentHeight += bmp.height
         }
 
+        return result
+    }
+
+    private fun ensureWhiteBackground(source: Bitmap): Bitmap {
+        val result = Bitmap.createBitmap(
+            maxOf(1, source.width),
+            maxOf(1, source.height),
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(result)
+        canvas.drawColor(Color.WHITE) // fundo branco
+        canvas.drawBitmap(source, 0f, 0f, null) // desenha a original em cima
         return result
     }
 
@@ -119,7 +139,6 @@ class GenerateImageBase64 {
                 val g = Color.green(pixel)
                 val b = Color.blue(pixel)
                 val gray = (0.299 * r + 0.587 * g + 0.114 * b).toInt()
-
                 val color = if (gray < 128) Color.BLACK else Color.WHITE
                 paint.color = color
                 canvas.drawPoint(x.toFloat(), y.toFloat(), paint)
@@ -131,14 +150,12 @@ class GenerateImageBase64 {
 
     private fun convertPrintableContentInMapAndReturn(printableContent: List<Bundle>): MutableList<Map<String, String>> {
         val newListPrintable: MutableList<Map<String, String>> = ArrayList()
-
         for (content: Bundle in printableContent) {
             val map: Map<String, String> = content.keySet().associateWith { key ->
                 content.getString(key).toString()
             }
             newListPrintable.add(map)
         }
-
         return newListPrintable
     }
 
@@ -168,14 +185,12 @@ class GenerateImageBase64 {
             isAntiAlias = true
         }
 
-        val lines = content
-            .split("\n")
-            .flatMap { splitLine(it, maxCharsPerLine) }
+        val lines = if (content.isBlank()) listOf(" ") else content.split("\n").flatMap { splitLine(it, maxCharsPerLine) }
 
         val metrics = paint.fontMetrics
-        val lineHeight = (metrics.bottom - metrics.top).toInt()
+        val lineHeight = maxOf(1, (metrics.bottom - metrics.top).toInt())
         val width = 384
-        val height = lineHeight * lines.size
+        val height = maxOf(1, lineHeight * lines.size)
 
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -197,7 +212,6 @@ class GenerateImageBase64 {
     private fun splitLine(text: String, maxChars: Int): List<String> {
         val result = mutableListOf<String>()
         var start = 0
-
         while (start < text.length) {
             val end = minOf(start + maxChars, text.length)
             result.add(text.substring(start, end))
