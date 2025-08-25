@@ -120,8 +120,9 @@ Estrutura dados de estorno:
 
 ### IfoodPagoPrintPayload
 Configura impressão:
-- `integrationApp`: Nome da aplicação
+- `integrationApp`: Nome da integradora. Deve ser informado sem espaços, utilizando por exemplo underline: Nome_Integradora.
 - `printableContent`: Lista de conteúdos para impressão
+- `groupAll`: Valor booleano que indica se toda a lista deve ser agrupada em uma única imagem.
 
 ## Tipos de Impressão
 

@@ -108,8 +108,9 @@ class FlutterIfoodPagoPlugin: FlutterPlugin, MethodCallHandler , ActivityAware {
       }
       "generateImageBase64" -> {
         val listPrintContent: List<HashMap<String, Any?>>? = call.argument<List<HashMap<String, Any?>>>("printable_content")
+        val groupAll: Boolean = call.argument<Boolean?>("groupAll") ?: true
         if (listPrintContent != null) {
-          val responseMap: Map<String, Any?> = generateImageBase64.convertPrintableItemsToImageBase64(binding!!.activity, listPrintContent.toBundleList())
+          val responseMap: Map<String, Any?> = generateImageBase64.convertPrintableItemsToImageBase64(binding!!.activity, listPrintContent.toBundleList(), groupAll)
 
           sendResultData(responseMap)
         } else {

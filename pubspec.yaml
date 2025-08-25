@@ -1,6 +1,6 @@
 name: flutter_ifood_pago
-description: "A new Flutter plugin project."
-version: 0.0.1
+description: "Plugin flutter que faz a integração com o SDK do Ifood, para pagamento com maquininhas POS"
+version: 1.0.1
 homepage: https://github.com/Luiz-Carlos-de-Lima/flutter_ifood_pago
 
 environment:

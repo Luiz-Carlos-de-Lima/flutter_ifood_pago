@@ -594,7 +594,11 @@ class _PrintPageState extends State<_PrintPage> {
                         ? null
                         : () async {
                             try {
-                              final print = IfoodPagoPrintPayload(integrationApp: 'Jclan', printableContent: List<IfoodPagoContentprint>.from(_receiptContent));
+                              final print = IfoodPagoPrintPayload(
+                                integrationApp: 'Exemplo_integradora',
+                                printableContent: List<IfoodPagoContentprint>.from(_receiptContent),
+                                groupAll: true,
+                              );
                               _previewBase64 = await flutterIfoodPagoPlugin.printData(payload: print);
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Impressão realizada com sucesso!")));
                               setState(() {});

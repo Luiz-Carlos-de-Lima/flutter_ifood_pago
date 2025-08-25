@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
+import android.util.Log
 
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import org.json.JSONObject
@@ -37,8 +38,9 @@ class RequestPrintTokenDeeplink: Deeplink() {
                 authority("portal.ifood.com.br")
                 appendPath("print-file")
                 appendQueryParameter("content", contentBase64)
-
             }
+            Log.d("contentBase64", contentBase64.toString())
+            Log.d("URi", uriBuilder.toString())
 
             val printIntent = Intent(Intent.ACTION_VIEW)
             printIntent.data = uriBuilder.build()

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -13,7 +14,6 @@ import 'package:flutter_ifood_pago/models/ifood_pago_payment_payload.dart';
 import 'package:flutter_ifood_pago/models/ifood_pago_print_payload.dart';
 import 'package:flutter_ifood_pago/models/ifood_pago_refund_payload.dart';
 import 'package:flutter_ifood_pago/models/ifood_pago_refund_response.dart';
-import 'package:flutter_ifood_pago/services/ifood_pago_printer_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -84,7 +84,7 @@ class MethodChannelFlutterIfoodPago extends FlutterIfoodPagoPlatform {
         difference = now.difference(createAtDate);
       }
 
-      if (difference != null && difference.inHours > 24) {
+      if (difference != null && difference.inHours > 23) {
         await prefs.remove(IfoodPagoKeysStorage.TOKEN);
         await prefs.remove(IfoodPagoKeysStorage.TOKEN_CREATED_AT);
 
@@ -116,7 +116,10 @@ class MethodChannelFlutterIfoodPago extends FlutterIfoodPagoPlatform {
         prefs.setString(IfoodPagoKeysStorage.TOKEN_CREATED_AT, createAt);
       }
 
-      final listaImageBase64 = await methodChannel.invokeMethod<Map>('generateImageBase64', {'printable_content': payload.toJson()['printable_content']});
+      final listaImageBase64 = await methodChannel.invokeMethod<Map>('generateImageBase64', {
+        'printable_content': payload.toJson()['printable_content'],
+        'groupAll': payload.groupAll,
+      });
 
       if (listaImageBase64 is! Map) {
         throw IfoodPagoPrintException(message: 'invalid listaImageBase64');
@@ -133,6 +136,8 @@ class MethodChannelFlutterIfoodPago extends FlutterIfoodPagoPlatform {
       List<Map> imageBase64List = [];
 
       for (var imageBase64 in listaImageBase64['data']) {
+        log(imageBase64.toString());
+
         final response = await http.post(
           Uri.parse("https://movilepay-api.ifood.com.br/ifoodpay/mobile/api/v1/print/file"),
           headers: {'Content-Type': 'application/json'},

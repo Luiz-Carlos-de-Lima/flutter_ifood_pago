@@ -7,54 +7,100 @@ import android.util.Base64
 import java.io.ByteArrayOutputStream
 
 class GenerateImageBase64 {
-    fun convertPrintableItemsToImageBase64(context: Context, data: List<Bundle>): Map<String, Any?> {
+    fun convertPrintableItemsToImageBase64(context: Context, data: List<Bundle>, groupAll: Boolean): Map<String, Any?> {
         return try {
-            val listMap = convertPrintableContentInMapAndReturn(data).map { item ->
-                if (item["type"] == "image") {
-                    val originalBase64 = item["imagePath"] ?: ""
-                    val decodedBytes = Base64.decode(originalBase64, Base64.DEFAULT)
-                    val originalBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+            val listMap = convertPrintableContentInMapAndReturn(data)
 
-                    if (originalBitmap != null){
-                        val bwBitmap = convertTo1BitBitmap(originalBitmap)
-                        val base64 = bitmapToBase64(bwBitmap)
 
+            if (groupAll) {
+                val bitmaps = mutableListOf<Bitmap>()
+
+                listMap.forEach { item ->
+                    if (item["type"] == "image") {
+                        val originalBase64 = item["imagePath"] ?: ""
+                        val decodedBytes = Base64.decode(originalBase64, Base64.DEFAULT)
+                        val originalBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                        originalBitmap?.let { bitmaps.add(convertTo1BitBitmap(it)) }
+                    } else {
+                        val content = item["content"] ?: ""
+                        val align = item["align"] ?: "left"
+                        val size = item["size"] ?: "small"
+                        val textBitmap = createTextBitmap(context, content, align, size)
+                        bitmaps.add(convertTo1BitBitmap(textBitmap))
+                    }
+                }
+
+                val finalBitmap = mergeBitmapsVertically(bitmaps)
+                val base64 = bitmapToBase64(finalBitmap)
+
+                mapOf(
+                    "code" to "SUCCESS",
+                    "data" to listOf(
                         mapOf(
                             "type" to "image",
                             "imageBase64" to base64
                         )
-                    } else {
-                        mapOf(
-                            "type" to "image",
-                            "imageBase64" to ""
-                        )
-                    }
-                } else {
-                    val content = item["content"] ?: ""
-                    val align = item["align"] ?: "left"
-                    val size = item["size"] ?: "small"
-
-                    val bitmap = createTextBitmap(context, content, align, size)
-                    val bwBitmap = convertTo1BitBitmap(bitmap)
-                    val base64 = bitmapToBase64(bwBitmap)
-
-                    mapOf(
-                        "type" to "image",
-                        "imageBase64" to base64
                     )
-                }
-            }
+                )
+            } else {
+                val mappedList = listMap.map { item ->
+                    if (item["type"] == "image") {
+                        val originalBase64 = item["imagePath"] ?: ""
+                        val decodedBytes = Base64.decode(originalBase64, Base64.DEFAULT)
+                        val originalBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
 
-             mapOf(
-                "code" to "SUCCESS",
-                "data" to listMap
-            )
+                        if (originalBitmap != null) {
+                            val bwBitmap = convertTo1BitBitmap(originalBitmap)
+                            val base64 = bitmapToBase64(bwBitmap)
+                            mapOf("type" to "image", "imageBase64" to base64)
+                        } else {
+                            mapOf("type" to "image", "imageBase64" to "")
+                        }
+                    } else {
+                        val content = item["content"] ?: ""
+                        val align = item["align"] ?: "left"
+                        val size = item["size"] ?: "small"
+
+                        val bitmap = createTextBitmap(context, content, align, size)
+                        val bwBitmap = convertTo1BitBitmap(bitmap)
+                        val base64 = bitmapToBase64(bwBitmap)
+
+                        mapOf("type" to "image", "imageBase64" to base64)
+                    }
+                }
+
+                mapOf(
+                    "code" to "SUCCESS",
+                    "data" to mappedList
+                )
+            }
         } catch (e: Exception) {
-             mapOf(
+            mapOf(
                 "code" to "ERROR",
                 "message" to e.toString()
             )
         }
+    }
+
+    private fun mergeBitmapsVertically(bitmaps: List<Bitmap>): Bitmap {
+        if (bitmaps.isEmpty()) {
+            return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+        }
+
+        val width = bitmaps.maxOf { it.width }
+        val totalHeight = bitmaps.sumOf { it.height }
+
+        val result = Bitmap.createBitmap(width, totalHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(result)
+        canvas.drawColor(Color.WHITE)
+
+        var currentHeight = 0
+        for (bmp in bitmaps) {
+            canvas.drawBitmap(bmp, 0f, currentHeight.toFloat(), null)
+            currentHeight += bmp.height
+        }
+
+        return result
     }
 
     private fun convertTo1BitBitmap(source: Bitmap): Bitmap {
