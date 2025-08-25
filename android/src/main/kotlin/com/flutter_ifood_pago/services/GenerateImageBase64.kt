@@ -185,7 +185,14 @@ class GenerateImageBase64 {
             isAntiAlias = true
         }
 
-        val lines = if (content.isBlank()) listOf(" ") else content.split("\n").flatMap { splitLine(it, maxCharsPerLine) }
+        val lines = if (content.isEmpty()) listOf(" ")
+        else content.split("\n").flatMap { line ->
+            if (line.trim().isEmpty()) {
+                listOf(line)
+            } else {
+                splitLine(line, maxCharsPerLine)
+            }
+        }
 
         val metrics = paint.fontMetrics
         val lineHeight = maxOf(1, (metrics.bottom - metrics.top).toInt())
@@ -203,7 +210,13 @@ class GenerateImageBase64 {
                 else -> 0f
             }
             val y = (index * lineHeight) - paint.fontMetrics.top
-            canvas.drawText(line, x, y, paint)
+
+            if (line.trim().isEmpty()) {
+
+                canvas.drawPoint(0f, y, Paint().apply { color = Color.TRANSPARENT })
+            } else {
+                canvas.drawText(line, x, y, paint)
+            }
         }
 
         return bitmap
