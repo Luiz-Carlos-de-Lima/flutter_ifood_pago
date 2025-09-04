@@ -10,3 +10,7 @@
 ## 1.0.2
 
 * Fix all bugs
+
+## 1.0.4
+
+* Reduced `compileSdk` requirement to improve compatibility with older projects.
